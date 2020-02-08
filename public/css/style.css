@@ -1,7 +1,10 @@
 svg {
   border: 1px solid grey;
 }
-svg > rect {
+g > rect {
   fill: grey;
-  y: 10;
+}
+.axislable {
+  font-size: 20px;
+  text-anchor: middle;
 }
