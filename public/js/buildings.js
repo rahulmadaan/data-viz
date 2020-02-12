@@ -10,7 +10,7 @@ const drawBuildings = buildings => {
   const y = d3
     .scaleLinear()
     .domain([0, _.maxBy(build, "height").height])
-    .range([0, height]);
+    .range([height, 0]);
 
   const x = d3
     .scaleBand()
@@ -70,8 +70,9 @@ const drawBuildings = buildings => {
     .enter()
     .append("rect")
     .attr("x", (b, i) => x(b.name))
+    .attr("y", b => y(b.height))
     .attr("width", x.bandwidth)
-    .attr("height", b => y(b.height));
+    .attr("height", b => y(0) - y(b.height));
 };
 const main = () => {
   buildings = d3.json("data/buildings.json").then(drawBuildings);
