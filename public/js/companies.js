@@ -1,4 +1,6 @@
-const drawBuildings = buildings => {
+const domains = ["CMP", "PE", "MarketCap"];
+
+const drawBuildings = (buildings, context, firstTime) => {
   build = buildings;
 
   const chart = { width: 800, height: 600 };
@@ -9,7 +11,7 @@ const drawBuildings = buildings => {
 
   const y = d3
     .scaleLinear()
-    .domain([0, _.maxBy(build, "CMP").CMP])
+    .domain([0, _.maxBy(build, context)[context]])
     .range([height, 0]);
 
   const x = d3
@@ -21,7 +23,7 @@ const drawBuildings = buildings => {
 
   const c = d3.scaleOrdinal(d3.schemeCategory10);
 
-  const svg = d3
+  svg = d3
     .select("#chart-area")
     .append("svg")
     .attr("width", chart.width)
@@ -38,7 +40,7 @@ const drawBuildings = buildings => {
     .attr("class", "x axislable");
 
   g.append("text")
-    .text("CMP (₹)")
+    .text(`${context} (₹)`)
     .attr("transform", "rotate(-90)")
     .attr("x", -height / 2)
     .attr("y", -60)
@@ -67,15 +69,7 @@ const drawBuildings = buildings => {
     .attr("x", -5)
     .attr("y", 10)
     .attr("text-anchor", "end");
-
-  newRects = rectangles
-    .enter()
-    .append("rect")
-    .attr("x", (b, i) => x(b.Name))
-    .attr("y", b => y(b.CMP))
-    .attr("width", x.bandwidth)
-    .attr("height", b => y(0) - y(b.CMP))
-    .attr("fill", b => c(b.Name));
+  update(rectangles, x, y, c, context, firstTime);
 };
 
 const formatData = ({ Name, ...numerics }) => {
@@ -83,7 +77,29 @@ const formatData = ({ Name, ...numerics }) => {
   return { Name, ...numerics };
 };
 
-const main = () => {
-  buildings = d3.csv("data/companies.csv", formatData).then(drawBuildings);
+const update = (rectangles, x, y, c, context, bool) => {
+  if (!bool) {
+    // from second time
+    d3.select("svg").remove();
+  }
+  newC = rectangles
+    .enter()
+    .append("rect")
+    .attr("x", (b, i) => x(b.Name))
+    .attr("y", b => y(b[context]))
+    .attr("width", x.bandwidth)
+    .attr("height", b => y(0) - y(b[context]))
+    .attr("fill", b => c(b.Name));
 };
+
+const main = () => {
+  buildings = d3.csv("data/companies.csv", formatData).then(t => {
+    let i = 0;
+    setInterval(x => {
+      drawBuildings(t, domains[i % domains.length], i == 0);
+      i = i + 1;
+    }, 2000);
+  });
+};
+
 window.onload = main;
