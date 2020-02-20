@@ -1,0 +1,43 @@
+svg {
+  border: 1px solid grey;
+  margin-top: 3%;
+}
+.axis-label {
+  font-size: 20px;
+  text-anchor: "middle";
+  fill: black;
+}
+.x.axis text {
+  text-anchor: end;
+  font-weight: bold;
+  transform: rotate(-40deg);
+}
+.y.axis text {
+  text-anchor: end;
+}
+.companyDetails {
+  font-weight: bold;
+  color: black;
+}
+#chart-data {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+}
+.close {
+  fill: none;
+  stroke: blue;
+  stroke-width: 3px;
+}
+.avg {
+  fill: none;
+  stroke: red;
+  stroke-width: 3px;
+}
+#slider-container {
+  margin-top: 10px;
+  height: 40px;
+  background-color: #eeeef5;
+  text-transform: none;
+  font-weight: bold;
+}

@@ -15,6 +15,8 @@ const domains = [
   "QSales",
   "ROCE"
 ];
+
+const UPDATE_INTERVAL = 1000;
 const chart = { width: 800, height: 600 };
 const margin = { top: 10, right: 10, left: 100, bottom: 150 };
 
@@ -54,11 +56,7 @@ const setYAxisText = (g, context, width, height) => {
     .attr("class", "y axislable");
 };
 
-const drawBuildings = buildings => {
-  const context = domains[0];
-  build = buildings;
-
-  const { x, y } = generateAxis(buildings, context, width, height);
+const init = () => {
   const c = d3.scaleOrdinal(d3.schemeCategory10);
 
   svg = d3
@@ -71,51 +69,29 @@ const drawBuildings = buildings => {
     .append("g")
     .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  setXAxisText(g, width, height);
-  setYAxisText(g, context, width, height);
-
-  rectangles = g.selectAll("rect").data(buildings);
-
-  const yAxis = d3
-    .axisLeft(y)
-    .tickFormat(d => d + "₹")
-    .ticks(10);
-
-  const xAxis = d3.axisBottom(x);
-
-  g.append("g")
-    .attr("class", "y-axis")
-    .call(yAxis);
-
-  g.append("g")
-    .attr("class", "x-axis")
-    .attr("transform", `translate(0, ${height})`)
-    .call(xAxis);
-
   g.selectAll(".x-axis text")
     .attr("transform", "rotate(-45)")
     .attr("x", -5)
     .attr("y", 10)
     .attr("text-anchor", "end");
-
-  newC = rectangles
-    .enter()
-    .append("rect")
-    .attr("x", (b, i) => x(b.Name))
-    .attr("y", b => y(b[context]))
-    .attr("width", x.bandwidth)
-    .attr("height", b => y(0) - y(b[context]))
-    .attr("fill", b => c(b.Name));
 };
 
 const updateCompanies = (companies, domain) => {
   const svg = d3.select("#chart-area svg");
   svg.select(".y.axislable").text(domain);
 
-  const y = d3
-    .scaleLinear()
-    .domain([0, _.maxBy(companies, domain)[domain]])
-    .range([height, 0]);
+  setXAxisText(g, width, height);
+  setYAxisText(g, domain, width, height);
+
+  const { x, y } = generateAxis(companies, domain, width, height);
+
+  const xAxis = d3.axisBottom(x);
+  svg.select(".x-axis").call(xAxis);
+
+  g.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0, ${height})`)
+    .call(xAxis);
 
   const yAxis = d3
     .axisLeft(y)
@@ -124,14 +100,17 @@ const updateCompanies = (companies, domain) => {
 
   svg.select(".y-axis").call(yAxis);
 
-  const x = d3
-    .scaleBand()
-    .range([0, width])
-    .domain(_.map(companies, "Name"))
-    .padding(0.3);
+  g.append("g")
+    .attr("class", "y-axis")
+    .call(yAxis);
 
-  const xAxis = d3.axisBottom(x);
-  svg.select(".x-axis").call(xAxis);
+  rectangles = g.selectAll("rect").data(buildings);
+
+  svg
+    .selectAll("rect")
+    .data(companies)
+    .exit()
+    .remove();
 
   svg
     .selectAll("rect")
@@ -143,12 +122,6 @@ const updateCompanies = (companies, domain) => {
     .attr("width", x.bandwidth)
     .attr("y", c => y(c[domain]))
     .attr("height", c => y(0) - y(c[domain]));
-
-  svg
-    .selectAll("rect")
-    .data(companies)
-    .exit()
-    .remove();
 };
 
 const formatData = ({ Name, ...numerics }) => {
@@ -156,18 +129,19 @@ const formatData = ({ Name, ...numerics }) => {
   return { Name, ...numerics };
 };
 
+const start = companies => {
+  init();
+  let i = 0;
+  setInterval(
+    () => updateCompanies(companies, domains[i++ % domains.length]),
+    UPDATE_INTERVAL
+  );
+  frequentlyMoveCompanies(companies, []);
+};
+
 const main = () => {
   buildings = d3.csv("data/companies.csv", formatData).then(companies => {
-    drawBuildings(companies);
-    let i = 0;
-    setInterval(() => {
-      updateCompanies(companies, domains[i % domains.length]);
-      i = i + 1;
-    }, 1000);
-    // setInterval(() => {
-    //   domains.shift();
-    // }, 3000);
-    frequentlyMoveCompanies(companies, []);
+    start();
   });
 };
 
