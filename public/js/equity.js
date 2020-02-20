@@ -69,7 +69,7 @@ const updateChart = quotes => {
   svgGroup
     .append("path")
     .attr("class", "avg")
-    .attr("d", lineAvg(quotes.slice(100)));
+    .attr("d", lineAvg(quotes.filter(q => q.SMA)));
 };
 
 const initChart = function() {
@@ -125,13 +125,9 @@ const getLastPrices = (day, quotes) => {
 };
 
 const analyseData = quotes => {
-  let data = [];
   for (let day = 100; day < quotes.length; day++) {
-    let avg = calculateSMA(getLastPrices(day, quotes), 100);
-    quotes[day].SMA = avg;
-    data.push(avg);
+    quotes[day].SMA = calculateSMA(getLastPrices(day, quotes), 100);
   }
-  return data;
 };
 
 const slider = quotes => {
@@ -144,7 +140,7 @@ const slider = quotes => {
     "#slider-container"
   );
 
-  slider.onChange(newRange => {
+  slider.onChange(function(newRange) {
     const startDate = newRange.begin;
     const endDate = newRange.end;
 
@@ -152,14 +148,17 @@ const slider = quotes => {
       `${toLocale(startDate)} - ${toLocale(endDate)}`
     );
 
-    const rangeQuotes = quotes.filter(quote => {
-      return (
-        quote.Time.getTime() >= startDate && quote.Time.getTime() <= endDate
-      );
+    const range = quotes.filter(x => {
+      return x.Time.getTime() >= startDate && x.Time.getTime() <= endDate;
     });
-    updateChart(rangeQuotes);
+    updateChart(range);
   });
   slider.range(minDate.getTime(), maxDate.getTime());
+};
+
+const updateSmaPeriod = quotes => {
+  const input = +d3.select("#sma-period-input").node().value;
+  analyseData(quotes, input);
 };
 
 const main = () => {
@@ -173,7 +172,7 @@ const main = () => {
     analyseData(quotes);
     initChart();
     slider(quotes);
-    updateChart(quotes.slice(100));
+    updateChart(quotes);
   });
 };
 

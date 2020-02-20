@@ -19,6 +19,14 @@
 
     <div class="container">
       <div id="date-range" class="d-flex justify-content-center"></div>
+      <div id="sma-period">
+        <input
+          id="sma-period-input"
+          type="text"
+          onkeyup="updateSmaPeriod()"
+          placeholder="Enter SMA period"
+        />
+      </div>
       <div id="slider-container"></div>
       <div class="row">
         <div id="chart-area"></div>
