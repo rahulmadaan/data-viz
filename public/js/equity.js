@@ -113,21 +113,19 @@ const initChart = function() {
     .attr("y", 10);
 };
 
-const calculateSMA = (prices, days) => {
-  const total = prices.reduce((a, b) => a + b, 0);
-  let res = total / days;
-  return res;
+const sum = list => {
+  return list.reduce((acc, ele) => acc + ele.Close, 0);
 };
 
-const getLastPrices = (day, quotes) => {
-  const res = _.takeRight(_.take(quotes, day), 100);
-  return res.map(q => q.Close);
-};
-
-const analyseData = quotes => {
-  for (let day = 100; day < quotes.length; day++) {
-    quotes[day].SMA = calculateSMA(getLastPrices(day, quotes), 100);
-  }
+const analyseData = (quotes, period = 100, offset = 0) => {
+  quotes.forEach((quote, index) => {
+    if (index > period - 1) {
+      quote.sma =
+        sum(quotes.slice(index - (period + offset), index - offset)) / period;
+    } else {
+      quote.sma = 0;
+    }
+  });
 };
 
 const slider = quotes => {
@@ -157,8 +155,8 @@ const slider = quotes => {
 };
 
 const updateSmaPeriod = quotes => {
-  const input = +d3.select("#sma-period-input").node().value;
-  analyseData(quotes, input);
+  const period = +d3.select("#sma-period-input").node().value;
+  analyseData(quotes, period);
 };
 
 const main = () => {
@@ -171,6 +169,7 @@ const main = () => {
   }).then(quotes => {
     analyseData(quotes);
     initChart();
+    updateSmaPeriod(quotes);
     slider(quotes);
     updateChart(quotes);
   });
