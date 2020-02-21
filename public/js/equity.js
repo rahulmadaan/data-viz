@@ -51,25 +51,21 @@ const updateChart = quotes => {
   svg.select(".y.axis").call(yAxis);
   svg.select(".x.axis").call(xAxis);
 
-  const line = d3
-    .line()
-    .x(q => x(new Date(q.Date)))
-    .y(q => y(q.Close));
-
-  const lineAvg = d3
-    .line()
-    .x(q => x(new Date(q.Date)))
-    .y(q => y(q.SMA));
+  const line = field =>
+    d3
+      .line()
+      .x(q => x(q.Time))
+      .y(q => y(q[field]));
 
   svgGroup
     .append("path")
     .attr("class", "close")
-    .attr("d", line(quotes));
+    .attr("d", line("Close")(quotes));
 
   svgGroup
     .append("path")
     .attr("class", "avg")
-    .attr("d", lineAvg(quotes.filter(q => q.SMA)));
+    .attr("d", line("sma")(_.filter(quotes, "sma")));
 };
 
 const initChart = function() {
@@ -118,14 +114,20 @@ const sum = list => {
 };
 
 const analyseData = (quotes, period = 100, offset = 0) => {
-  quotes.forEach((quote, index) => {
-    if (index > period - 1) {
-      quote.sma =
-        sum(quotes.slice(index - (period + offset), index - offset)) / period;
-    } else {
-      quote.sma = 0;
-    }
-  });
+  for (let index = period + offset; index <= quotes.length; index++) {
+    const sets = _.slice(quotes, index - period - offset, index - offset);
+    const sma = _.round(
+      _.reduce(
+        sets,
+        (acc, element) => {
+          return acc + element.Close;
+        },
+        0
+      ) / period
+    );
+    quotes[index - 1].sma = sma;
+  }
+  return quotes;
 };
 
 const slider = quotes => {
@@ -154,10 +156,7 @@ const slider = quotes => {
   slider.range(minDate.getTime(), maxDate.getTime());
 };
 
-const updateSmaPeriod = quotes => {
-  const period = +d3.select("#sma-period-input").node().value;
-  analyseData(quotes, period);
-};
+// const period = +d3.select("#sma-period-input").node().value;
 
 const main = () => {
   d3.csv("/data/NSEI.csv", q => {
@@ -167,9 +166,8 @@ const main = () => {
       Time: new Date(q.Date)
     };
   }).then(quotes => {
-    analyseData(quotes);
+    quotes = analyseData(quotes);
     initChart();
-    updateSmaPeriod(quotes);
     slider(quotes);
     updateChart(quotes);
   });
