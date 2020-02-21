@@ -130,6 +130,22 @@ const analyseData = (quotes, period = 100, offset = 0) => {
   return quotes;
 };
 
+const updatePeriodAndOffset = quotes => {
+  let period = 100;
+  let offset = 1;
+  d3.select("#sma-period-input").on("input", () => {
+    period = +d3.select("#sma-period-input").node().value;
+    analyseData(quotes, period, offset);
+    updateChart(quotes);
+  });
+
+  d3.select("#sma-offset-input").on("input", () => {
+    offset = +d3.select("#sma-offset-input").node().value || 1;
+    analyseData(quotes, period, +offset);
+    updateChart(quotes);
+  });
+};
+
 const slider = quotes => {
   const toLocale = date => new Date(date).toLocaleString();
   const minDate = _.first(quotes).Time;
@@ -156,8 +172,6 @@ const slider = quotes => {
   slider.range(minDate.getTime(), maxDate.getTime());
 };
 
-// const period = +d3.select("#sma-period-input").node().value;
-
 const main = () => {
   d3.csv("/data/NSEI.csv", q => {
     return {
@@ -168,6 +182,7 @@ const main = () => {
   }).then(quotes => {
     quotes = analyseData(quotes);
     initChart();
+    updatePeriodAndOffset(quotes);
     slider(quotes);
     updateChart(quotes);
   });
