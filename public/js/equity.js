@@ -134,7 +134,7 @@ const updatePeriodAndOffset = quotes => {
   let period = 100;
   let offset = 1;
   d3.select("#sma-period-input").on("input", () => {
-    period = +d3.select("#sma-period-input").node().value;
+    period = +d3.select("#sma-period-input").node().value || 100;
     analyseData(quotes, period, offset);
     updateChart(quotes);
   });
@@ -172,6 +172,57 @@ const slider = quotes => {
   slider.range(minDate.getTime(), maxDate.getTime());
 };
 
+const eventTemplate = (date, closePrice, sma, type) => {
+  return {
+    Date: date,
+    Close: closePrice,
+    sma,
+    transactionType: type
+  };
+};
+
+const extractEvents = quotes => {
+  // 55
+  let events = [];
+  let flag = "long";
+  for (let index = 0; index < quotes.length; index++) {
+    let quote = quotes[index];
+    if (quote.sma) {
+      if (quote.sma < quote.Close && flag === "long") {
+        events.push(eventTemplate(quote.Date, quote.Close, quote.sma, "Buy"));
+        flag = "short";
+      }
+      if (quote.sma > quote.Close && flag === "short") {
+        events.push(eventTemplate(quote.Date, quote.Close, quote.sma, "Sell"));
+        flag = "long";
+      }
+    }
+  }
+  return events;
+};
+
+const getTransactionDetails = (buy, sell) => {
+  return {
+    Date: buy.Date,
+    "P/L": sell.Close - buy.Close
+  };
+};
+
+const extractTransactions = quotes => {
+  const events = extractEvents(quotes);
+  const transactions = [];
+  if (events.length % 2 != 0) {
+    let lastEvent = events[events.length - 1];
+    lastEvent.transactionType = "Sell";
+    events.push(lastEvent);
+  }
+  for (let index = 0; index < events.length - 1; index = index + 2) {
+    transactions.push(getTransactionDetails(events[index], events[index + 1]));
+  }
+  console.log("transactions ->> ", transactions);
+  return transactions;
+};
+
 const main = () => {
   d3.csv("/data/NSEI.csv", q => {
     return {
@@ -183,6 +234,7 @@ const main = () => {
     quotes = analyseData(quotes);
     initChart();
     updatePeriodAndOffset(quotes);
+    extractTransactions(quotes);
     slider(quotes);
     updateChart(quotes);
   });

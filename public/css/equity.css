@@ -27,12 +27,12 @@ svg {
 .close {
   fill: none;
   stroke: blue;
-  stroke-width: 3px;
+  stroke-width: 2px;
 }
 .avg {
   fill: none;
   stroke: red;
-  stroke-width: 3px;
+  stroke-width: 2px;
 }
 #slider-container {
   margin-top: 10px;
