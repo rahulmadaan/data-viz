@@ -219,8 +219,37 @@ const extractTransactions = quotes => {
   for (let index = 0; index < events.length - 1; index = index + 2) {
     transactions.push(getTransactionDetails(events[index], events[index + 1]));
   }
-  console.log("transactions ->> ", transactions);
   return transactions;
+};
+
+const createTable = transactions => {
+  let table = d3.select("#table").append("table");
+  let header = table.append("thead").append("tr");
+  header
+    .selectAll("th")
+    .data(["Date", "P/L"])
+    .enter()
+    .append("th")
+    .text(d => d);
+
+  let tablebody = table.append("tbody");
+  rows = tablebody
+    .selectAll("tr")
+    .data(transactions)
+    .enter()
+    .append("tr");
+
+  // We built the rows using the nested array - now each row has its own array.
+  cells = rows
+    .selectAll("td")
+    // each row has data associated; we get it and enter it for the cells.
+    .data(d => {
+      console.log(d);
+      return d;
+    })
+    .enter()
+    .append("td")
+    .text(d => d);
 };
 
 const main = () => {
@@ -234,7 +263,8 @@ const main = () => {
     quotes = analyseData(quotes);
     initChart();
     updatePeriodAndOffset(quotes);
-    extractTransactions(quotes);
+    const transactions = extractTransactions(quotes);
+    createTable(transactions);
     slider(quotes);
     updateChart(quotes);
   });
